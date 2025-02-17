@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+        .chat-container {
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: left;
+        }
+        .chat-box {
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 10px;
+            background: #f9f9f9;
+            margin-bottom: 10px;
+            height: 300px;
+            overflow-y: auto;
+        }
+        input[type="text"] {
+            width: calc(100% - 80px);
+            padding: 10px;
+            margin-right: 10px;
+        }
+        button {
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>AI Tool Recommendation Assistant</h1>
+    <div class="chat-container">
+        <div id="chat-box" class="chat-box">
+            <!-- Default response -->
+            <p><strong>AI:</strong> Welcome! How can I assist you today?</p>
+        </div>
+        <input type="text" id="user-input" placeholder="Type your message here..." onkeydown="handleKeyPress(event)">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+    <script>
+        function handleKeyPress(event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
+        }
+
+        function formatTextToHTML(inputText) {
+            const lines = inputText.split('\n');
+            let formattedHTML = '';
+
+            lines.forEach(line => {
+                if (line.trim().startsWith('*')) {
+                    // If the line starts with '*', it's a list item
+                    formattedHTML += line
+                        .replace(/^\*\s*/, '<li>') // Replace leading * with <li>
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Replace **text** with <strong>text</strong>
+                        .concat('</li>');
+                } else {
+                    // Otherwise, treat it as normal text
+                    formattedHTML += `<p>${line}</p>`;
+                }
+            });
+
+            if (formattedHTML.includes('<li>')) {
+                // Wrap the list items in <ul> if there are any
+                formattedHTML = formattedHTML.replace(/(<li>.*?<\/li>)/g, '<ul>$1</ul>');
+            }
+
+            return formattedHTML;
+        }
+
+        function sendMessage() {
+            const userInput = document.getElementById("user-input").value;
+            if (!userInput.trim()) return; // Ignore empty input
+
+            fetch("/chat", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ message: userInput })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const chatBox = document.getElementById("chat-box");
+                chatBox.innerHTML += `<p><strong>You:</strong> ${userInput}</p>`;
+                chatBox.innerHTML += `<div><strong>AI Assistant:</strong> ${formatTextToHTML(data.response)}</div>`;
+                chatBox.scrollTop = chatBox.scrollHeight; // Scroll to the bottom
+                document.getElementById("user-input").value = "";
+            });
+        }
+    </script>
+</body>
+</html>
