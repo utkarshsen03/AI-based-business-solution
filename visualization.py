@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 
 class Visualization:
-    def __init__(self,sale_filepath,expense_filepath):
+    def __init__(self,sale_filepath,expense_filepath=None):
         self.sales_df = pd.read_excel(sale_filepath,index_col=None)
         self.expense_df = pd.read_excel(expense_filepath,index_col=0)
         
@@ -70,19 +70,19 @@ class Visualization:
         return month_sale, fig
     
     def weekly_quantity_sale(self):
-        week_sale = self.products.groupby('Day')['Quantities_Sold'].sum().sort_values(ascending=False)
+        week_sale = self.products.groupby('Day')['Quantities_Sold'].mean().sort_values(ascending=False)
         fig = px.bar(week_sale,x=week_sale.index,y='Quantities_Sold',log_y =True,title="Daily Quantity Sold")
         
         return week_sale, fig
     
     def monthly_sale_amount(self):
-        month_sale = self.products.groupby('Month')['Total_Sale_Amount'].sum().sort_values(ascending=False)
+        month_sale = self.sales_df.groupby('Month')['Total_Sale_Amount'].sum().sort_values(ascending=False)
         fig = px.bar(month_sale,x=month_sale.index,y='Total_Sale_Amount',log_y =True, title= "Monthly Sales")
         
         return month_sale, fig
     
     def weekly_sale_amount(self):
-        week_sale = self.products.groupby('Day')['Total_Sale_Amount'].sum().sort_values(ascending=False)
+        week_sale = self.sales_df.groupby('Day')['Total_Sale_Amount'].mean().sort_values(ascending=False)
         fig = px.bar(week_sale,x=week_sale.index,y='Total_Sale_Amount',log_y =True,title="Daily Sales")
         
         return week_sale, fig
@@ -109,30 +109,30 @@ class Visualization:
 
     
     def daily_sale(self):
-        new_df = self.df.sort_values("Date_Time")
+        new_df = self.sales_df.sort_values("Date_Time")
         fig = px.line(new_df,x="Date_Time",y="Paid_Amount",title="Daily Sales Plot")
         return fig
     
     def expenses(self):
-        total_expense = self.expense_data.sum()
+        total_expense = self.expense_df.sum()
         fig = px.bar(x=total_expense.index, y=total_expense.values)
         
         return total_expense, fig
     
-    def  monthly_expenses(self):
-        monthly_expense = self.expense_data.sum(axis=1).reset_index()
+    def monthly_expenses(self):
+        monthly_expense = self.expense_df.sum(axis=1).reset_index()
         monthly_expense.columns = ["Month","Total_Expense"]
         fig = px.bar(monthly_expense, x=monthly_expense['Month'], y=monthly_expense['Total_Expense'])
         
         return monthly_expense, fig
     
     def profit_analysis(self):
-        monthly_expense = self.expense_data.sum(axis=1).reset_index()
+        monthly_expense = self.expense_df.sum(axis=1).reset_index()
         monthly_expense.columns = ["Month","Total_Expense"]
         
-        monthly_sale = self.df.groupby("Month")['Paid_Amount'].agg('sum').reset_index()
+        monthly_sale = self.sales_df.groupby("Month")['Paid_Amount'].agg('sum').reset_index()
         
-        temp_df = pd.merge(monthly_sale,monthly_expense,on="Month")
+        temp_df = pd.merge(monthly_expense,monthly_sale,on="Month")
         
         temp_df['Profit'] = (temp_df["Paid_Amount"] - temp_df["Total_Expense"])/temp_df["Paid_Amount"] * 100
         
